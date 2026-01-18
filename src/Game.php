@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Rpg;
 
+use Illuminate\Support\Sleep;
 use Rpg\Console\Display\GameDisplay;
 use Rpg\Console\Prompts\GamePrompts;
 use Symfony\Component\Console\Cursor;
@@ -26,6 +27,8 @@ class Game
             return;
         }
 
+        $this->cursor->clearScreen();
+
         $this->startAdventure();
     }
 
@@ -34,6 +37,7 @@ class Game
         $this->display->showCharacterCreationSection();
 
         $name = $this->prompts->askName();
+        Sleep::for(0.5)->seconds();
         $weapon = $this->prompts->chooseWeapon();
 
         $this->cursor->clearScreen();
