@@ -28,7 +28,7 @@ class PlayCommand
 
         $cursor->clearScreen();
         $display->showTitle();
-        Sleep::for(1)->second();
+        Sleep::for(0.5)->seconds();
 
         $game->start();
 
