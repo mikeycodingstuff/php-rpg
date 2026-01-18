@@ -18,7 +18,6 @@ class Player
 
     public function __construct(
         protected string $name,
-        protected int $age,
         protected string $weapon,
     ) {
         $this->attackPower = match ($weapon) {
@@ -33,11 +32,6 @@ class Player
     {
         $this->health -= $damage;
         echo "You took $damage damage! Health: $this->health\n";
-    }
-
-    public function getAge(): int
-    {
-        return $this->age;
     }
 
     public function getWeapon(): string

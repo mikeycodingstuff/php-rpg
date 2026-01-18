@@ -4,106 +4,89 @@ declare(strict_types=1);
 
 namespace Rpg;
 
+use Rpg\Console\Display\GameDisplay;
+use Rpg\Console\Prompts\GamePrompts;
+use Symfony\Component\Console\Cursor;
+
 class Game
 {
     private Player $player;
 
+    public function __construct(
+        private GameDisplay $display,
+        private GamePrompts $prompts,
+        private Cursor $cursor,
+    ) {}
+
     public function start(): void
     {
         $this->player = $this->createPlayer();
+
+        if (!$this->prompts->confirmReady()) {
+            return;
+        }
+
         $this->startAdventure();
     }
 
     private function createPlayer(): Player
     {
-        echo "=== Character Creation ===\n";
+        $this->display->showCharacterCreationSection();
 
-        $name = $this->promptUntilValid(
-            'Enter your name: ',
-            fn ($input) => strlen(trim($input)) >= 2,
-            'Name must be at least 2 characters'
-        );
+        $name = $this->prompts->askName();
+        $weapon = $this->prompts->chooseWeapon();
 
-        $age = (int) $this->promptUntilValid(
-            'Age: ',
-            fn ($input) => is_numeric($input) && $input >= 10 && $input <= 100,
-            'Age must be between 10 and 100'
-        );
+        $this->cursor->clearScreen();
+        $this->display->showWelcome($name, $weapon);
 
-        echo "Choose your weapon:\n";
-        echo "  [1] Sword (balanced)\n";
-        echo "  [2] Axe (heavy damage)\n";
-        echo "  [3] Dagger (quick strikes)\n";
-
-        $weaponChoice = $this->promptUntilValid(
-            'Choice: ',
-            fn ($input) => in_array($input, ['1', '2', '3']),
-            'Please choose 1, 2, or 3'
-        );
-
-        $weapon = match ($weaponChoice) {
-            '1' => 'sword',
-            '2' => 'axe',
-            '3' => 'dagger',
-        };
-
-        return new Player($name, $age, $weapon);
-    }
-
-    private function promptUntilValid(string $prompt, callable $validator, string $errorMessage): string
-    {
-        while (true) {
-            $input = readline($prompt);
-            if ($validator($input)) {
-                return $input;
-            }
-            echo "{$errorMessage}\n";
-        }
+        return new Player($name, $weapon);
     }
 
     private function startAdventure(): void
     {
-        echo "\n=== Adventure Begins ===\n";
-        echo "Welcome, {$this->player->getName()}!\n\n";
-
+        $this->display->showAdventureBegins($this->player->getWeapon());
         $this->encounterEnemy(new Enemy('Goblin', 50, 15));
     }
 
     private function encounterEnemy(Enemy $enemy): void
     {
-        echo "A {$enemy->getName()} appears! (HP: {$enemy->getHealth()})\n";
+        $this->display->showEnemyAppears($enemy->getName());
+        $this->display->showStats($this->player, $enemy);
 
         while ($this->player->isAlive() && $enemy->isAlive()) {
-            $action = strtolower(readline("\n[A]ttack or [R]un? "));
+            $action = $this->prompts->chooseCombatAction();
 
-            if ($action === 'a') {
+            if ($action === 'attack') {
                 $this->combat($enemy);
-            } elseif ($action === 'r') {
-                echo "You ran away!\n";
-                break;
             } else {
-                echo "Invalid action!\n";
+                $this->display->showRanAway();
+                break;
             }
         }
 
         if (!$this->player->isAlive()) {
-            echo "\nGame Over!\n";
+            $this->display->showGameOver();
         }
     }
 
     private function combat(Enemy $enemy): void
     {
+        // Player attacks
         $playerDamage = $this->player->attack();
         $enemy->takeDamage($playerDamage);
-        echo "You dealt $playerDamage damage! Enemy HP: {$enemy->getHealth()}\n";
+        $this->display->showPlayerAttack($playerDamage);
 
         if (!$enemy->isAlive()) {
-            echo "You defeated the {$enemy->getName()}!\n";
+            $this->display->showVictory($enemy->getName());
 
             return;
         }
 
+        // Enemy attacks
         $enemyDamage = $enemy->attack();
         $this->player->takeDamage($enemyDamage);
+        $this->display->showEnemyAttack($enemy->getName(), $enemyDamage);
+
+        $this->display->showStats($this->player, $enemy);
     }
 }

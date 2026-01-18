@@ -1,0 +1,14 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+require 'vendor/autoload.php';
+
+use Rpg\Console\Command\PlayCommand;
+use Symfony\Component\Console\Application;
+
+$application = new Application('RPG Game', '1.0.0');
+$application->addCommand(new PlayCommand());
+$application->setDefaultCommand('play', true);
+$application->run();
