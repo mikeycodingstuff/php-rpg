@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Rpg\Console\Display;
 
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Str;
 use Rpg\Console\CustomStyle;
 use Rpg\Enemy;
 use Rpg\Player;
@@ -24,8 +26,18 @@ class GameDisplay
 
     public function showWelcome(string $name, string $weapon): void
     {
-        $this->io->text("You chose the $weapon!");
-        $this->io->success("Welcome, $name the warrior!");
+        $weaponConfig = Config::get("weapons.$weapon");
+
+        $this->io->text(sprintf(
+            'Welcome, <fg=magenta>%s</>!',
+            Str::title($name)
+        ));
+
+        $this->io->text(sprintf(
+            'You chose the <fg=cyan>%s %s</>!',
+            $weaponConfig['emoji'],
+            Str::title($weapon)
+        ));
     }
 
     public function showAdventureBegins(string $weapon): void
